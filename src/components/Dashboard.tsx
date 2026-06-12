@@ -22,6 +22,24 @@ export default function Dashboard({ profile, language }: DashboardProps) {
   const [trendAnalysis, setTrendAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedRoadmap, setSelectedRoadmap] = useState<Recommendation | null>(null);
+  const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
+const [completedSteps, setCompletedSteps] = useState<{[key: string]: boolean}>({});
   const [selectedUniversityName, setSelectedUniversityName] = useState<string | null>(null);
   const [universityData, setUniversityData] = useState<any>(null);
   const [isLoadingUni, setIsLoadingUni] = useState(false);
@@ -473,7 +491,45 @@ export default function Dashboard({ profile, language }: DashboardProps) {
                 <div className="relative">
                   <div className="absolute left-[15px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-[#ff4e00] to-transparent opacity-20" />
                   <div className="space-y-8">
-                    {selectedRoadmap.roadmap?.map((step, idx) => (
+                    {(() => {
+  const total = selectedRoadmap.roadmap?.length || 0;
+  const done = selectedRoadmap.roadmap?.filter((_: any, i: number) => completedSteps[`${selectedRoadmap.id}-${i}`]).length || 0;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  return (
+    <>
+      <div className="mb-6 space-y-2">
+        <div className="flex justify-between text-xs text-gray-400">
+          <span>Progress</span>
+          <span className="text-[#ff4e00] font-bold">{pct}%</span>
+        </div>
+        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-full bg-[#ff4e00] rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+      {selectedRoadmap.roadmap?.map((item: any, idx: number) => {
+        const stepKey = `${selectedRoadmap.id}-${idx}`;
+        const isDone = completedSteps[stepKey];
+        const step = typeof item === 'string' ? item : item.step;
+        const timeEstimate = typeof item === 'object' ? item.timeEstimate : null;
+        const courseLink = typeof item === 'object' ? item.courseLink : null;
+        return (
+          <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }} key={idx} className="relative pl-12">
+            <div className={`absolute left-0 top-0 w-8 h-8 rounded-xl border flex items-center justify-center font-bold shadow-xl z-10 transition-all cursor-pointer ${isDone ? 'bg-[#ff4e00] border-[#ff4e00] text-white' : 'bg-white/5 border-white/10 text-[#ff4e00]'}`} onClick={() => setCompletedSteps(prev => ({ ...prev, [stepKey]: !prev[stepKey] }))}>
+              {isDone ? '✓' : idx + 1}
+            </div>
+            <div className={`bg-white/5 border rounded-2xl p-4 transition-all ${isDone ? 'border-[#ff4e00]/30 opacity-60' : 'border-white/10 hover:border-[#ff4e00]/30'}`}>
+              <p className={`text-sm sm:text-base leading-relaxed font-medium ${isDone ? 'line-through text-gray-500' : 'text-gray-200'}`}>{step}</p>
+              <div className="flex items-center gap-3 mt-2 flex-wrap">
+                {timeEstimate && <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full text-gray-400">⏱ {timeEstimate}</span>}
+                {courseLink && <a href={courseLink} target="_blank" rel="noopener noreferrer" className="text-[10px] bg-[#ff4e00]/10 hover:bg-[#ff4e00]/20 px-2 py-0.5 rounded-full text-[#ff4e00] transition-all">📚 Free Course</a>}
+              </div>
+            </div>
+          </motion.div>
+        );
+      })}
+    </>
+  );
+})()}
                       <motion.div 
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -490,9 +546,8 @@ export default function Dashboard({ profile, language }: DashboardProps) {
                           </p>
                         </div>
                       </motion.div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+              </div>
 
                 <div className="p-4 bg-[#ff4e00]/5 border border-[#ff4e00]/20 rounded-2xl">
                   <div className="flex items-start gap-3">
@@ -526,9 +581,8 @@ export default function Dashboard({ profile, language }: DashboardProps) {
                       >
                         {uni}
                       </button>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+              </div>
               )}
             </motion.div>
           </div>
