@@ -127,7 +127,7 @@ export const getUniversityInfo = async (uniName: string, language: string = 'Eng
     - description: A compelling 2-3 sentence overview
     - rank: Approximate global ranking or national status
     - keyFeatures: An array of 3-4 strengths/specialties
-    - searchLink: A search query URL for the official website (e.g., https://www.google.com/search?q=MIT+official+website)
+    - searchLink: The direct official website URL of the university (e.g., https://www.mit.edu). If unknown, use https://www.google.com/search?q=UniversityName+official+site
   `;
 
   const response = await ai.models.generateContent({
