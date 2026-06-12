@@ -5,8 +5,9 @@ import Dashboard from './components/Dashboard';
 import ProfileSetup from './components/ProfileSetup';
 import Chat from './components/Chat';
 import Account from './components/Account';
+import EconomyTab from './components/EconomyTab';
 import LanguageSelector from './components/LanguageSelector';
-import { LogIn, LogOut, LayoutDashboard, MessageSquare, User as UserIcon, Loader2 } from 'lucide-react';
+import { LogIn, LogOut, LayoutDashboard, MessageSquare, User as UserIcon, Loader2, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from './lib/translations';
 
@@ -14,7 +15,7 @@ export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'chat' | 'profile'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'chat' | 'profile' | 'economy'>('dashboard');
   const [language, setLanguage] = useState<string>('English');
 
   useEffect(() => {
@@ -64,30 +65,16 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#0a0502] text-white flex flex-col items-center justify-center p-4 relative">
         <div className="absolute top-6 right-6">
-          <LanguageSelector 
-            currentLanguage={language} 
-            onLanguageChange={setLanguage} 
-          />
+          <LanguageSelector currentLanguage={language} onLanguageChange={setLanguage} />
         </div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-md w-full text-center space-y-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full text-center space-y-8">
           <div className="space-y-2">
             <h1 className="text-6xl font-bold tracking-tighter text-[#ff4e00]">FUTURAPATH</h1>
             <p className="text-gray-400 text-lg">{t('tagline', language)}</p>
           </div>
-          
           <div className="p-8 bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 space-y-6">
-            <p className="text-sm text-gray-300">
-              {t('signInDesc', language)}
-            </p>
-            <button 
-              onClick={signInWithGoogle}
-              className="w-full py-4 bg-[#ff4e00] hover:bg-[#ff6a2a] text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-            >
+            <p className="text-sm text-gray-300">{t('signInDesc', language)}</p>
+            <button onClick={signInWithGoogle} className="w-full py-4 bg-[#ff4e00] hover:bg-[#ff6a2a] text-white rounded-2xl font-bold flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-[0.98]">
               <LogIn className="w-5 h-5" />
               {t('continueWithGoogle', language)}
             </button>
@@ -124,64 +111,31 @@ export default function App() {
     'Taiwan', 'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan', 'Tuvalu',
     'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States', 'Uruguay', 'Uzbekistan',
     'Vanuatu', 'Vatican City', 'Venezuela', 'Vietnam',
-    'Yemen',
-    'Zambia', 'Zimbabwe'
+    'Yemen', 'Zambia', 'Zimbabwe'
   ];
 
   return (
     <div className="min-h-screen bg-[#0a0502] text-white flex flex-col">
-      {/* Navigation */}
       <nav className="border-b border-white/10 bg-black/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-[#ff4e00] rounded-lg flex items-center justify-center font-bold">F</div>
             <span className="font-bold tracking-tight hidden sm:block">FUTURAPATH</span>
           </div>
-          
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-1 sm:gap-2">
-              <LanguageSelector 
-                currentLanguage={language} 
-                onLanguageChange={setLanguage} 
-              />
-
-              <select 
-                value={profile.country || 'Global'}
-                onChange={(e) => handleProfileUpdate({ country: e.target.value })}
-                className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] sm:text-xs text-gray-300 outline-none focus:ring-1 focus:ring-[#ff4e00] max-w-[80px] sm:max-w-none"
-              >
-                {countries.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
+              <LanguageSelector currentLanguage={language} onLanguageChange={setLanguage} />
+              <select value={profile.country || 'Global'} onChange={(e) => handleProfileUpdate({ country: e.target.value })} className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] sm:text-xs text-gray-300 outline-none focus:ring-1 focus:ring-[#ff4e00] max-w-[80px] sm:max-w-none">
+                {countries.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-
             <div className="hidden sm:flex items-center gap-2">
-              <NavButton 
-                active={activeTab === 'dashboard'} 
-                onClick={() => setActiveTab('dashboard')}
-                icon={<LayoutDashboard className="w-4 h-4" />}
-                label={t('dashboard', language)}
-              />
-              <NavButton 
-                active={activeTab === 'chat'} 
-                onClick={() => setActiveTab('chat')}
-                icon={<MessageSquare className="w-4 h-4" />}
-                label={t('advisor', language)}
-              />
-              <NavButton 
-                active={activeTab === 'profile'} 
-                onClick={() => setActiveTab('profile')}
-                icon={<UserIcon className="w-4 h-4" />}
-                label={t('account', language)}
-              />
+              <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-4 h-4" />} label={t('dashboard', language)} />
+              <NavButton active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare className="w-4 h-4" />} label={t('advisor', language)} />
+              <NavButton active={activeTab === 'economy'} onClick={() => setActiveTab('economy')} icon={<TrendingUp className="w-4 h-4" />} label="Economy" />
+              <NavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<UserIcon className="w-4 h-4" />} label={t('account', language)} />
             </div>
-
-            <button 
-              onClick={logout}
-              className="p-2 text-gray-400 hover:text-white transition-colors"
-              title="Logout"
-            >
+            <button onClick={logout} className="p-2 text-gray-400 hover:text-white transition-colors" title="Logout">
               <LogOut className="w-5 h-5" />
             </button>
           </div>
@@ -191,65 +145,34 @@ export default function App() {
       <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 pb-24 sm:pb-6">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' && (
-            <motion.div 
-              key="dashboard"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-            >
+            <motion.div key="dashboard" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
               <Dashboard profile={profile} language={language} />
             </motion.div>
           )}
           {activeTab === 'chat' && (
-            <motion.div 
-              key="chat"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="h-[calc(100vh-12rem)] sm:h-[calc(100vh-10rem)]"
-            >
+            <motion.div key="chat" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="h-[calc(100vh-12rem)] sm:h-[calc(100vh-10rem)]">
               <Chat profile={profile} language={language} />
             </motion.div>
           )}
+          {activeTab === 'economy' && (
+            <motion.div key="economy" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+              <EconomyTab country={profile.country || 'Global'} language={language} />
+            </motion.div>
+          )}
           {activeTab === 'profile' && (
-            <motion.div 
-              key="profile"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-            >
-              <Account 
-                profile={profile} 
-                onUpdate={handleProfileUpdate} 
-                language={language}
-                onLanguageChange={setLanguage}
-              />
+            <motion.div key="profile" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+              <Account profile={profile} onUpdate={handleProfileUpdate} language={language} onLanguageChange={setLanguage} />
             </motion.div>
           )}
         </AnimatePresence>
       </main>
 
-      {/* Mobile Bottom Navigation */}
       <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-xl border-t border-white/10 px-6 py-3 z-50">
         <div className="flex items-center justify-between max-w-md mx-auto">
-          <MobileNavButton 
-            active={activeTab === 'dashboard'} 
-            onClick={() => setActiveTab('dashboard')}
-            icon={<LayoutDashboard className="w-6 h-6" />}
-            label={t('home', language)}
-          />
-          <MobileNavButton 
-            active={activeTab === 'chat'} 
-            onClick={() => setActiveTab('chat')}
-            icon={<MessageSquare className="w-6 h-6" />}
-            label={t('advisor', language)}
-          />
-          <MobileNavButton 
-            active={activeTab === 'profile'} 
-            onClick={() => setActiveTab('profile')}
-            icon={<UserIcon className="w-6 h-6" />}
-            label={t('account', language)}
-          />
+          <MobileNavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-6 h-6" />} label={t('home', language)} />
+          <MobileNavButton active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare className="w-6 h-6" />} label={t('advisor', language)} />
+          <MobileNavButton active={activeTab === 'economy'} onClick={() => setActiveTab('economy')} icon={<TrendingUp className="w-6 h-6" />} label="Economy" />
+          <MobileNavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<UserIcon className="w-6 h-6" />} label={t('account', language)} />
         </div>
       </div>
     </div>
@@ -258,14 +181,7 @@ export default function App() {
 
 function NavButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
   return (
-    <button 
-      onClick={onClick}
-      className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${
-        active 
-          ? 'bg-[#ff4e00]/10 text-[#ff4e00] font-medium' 
-          : 'text-gray-400 hover:text-white hover:bg-white/5'
-      }`}
-    >
+    <button onClick={onClick} className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${active ? 'bg-[#ff4e00]/10 text-[#ff4e00] font-medium' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
       {icon}
       <span className="text-sm hidden md:block">{label}</span>
     </button>
@@ -274,12 +190,7 @@ function NavButton({ active, onClick, icon, label }: { active: boolean, onClick:
 
 function MobileNavButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
   return (
-    <button 
-      onClick={onClick}
-      className={`flex flex-col items-center gap-1 transition-all ${
-        active ? 'text-[#ff4e00]' : 'text-gray-500'
-      }`}
-    >
+    <button onClick={onClick} className={`flex flex-col items-center gap-1 transition-all ${active ? 'text-[#ff4e00]' : 'text-gray-500'}`}>
       {icon}
       <span className="text-[10px] font-medium">{label}</span>
     </button>
