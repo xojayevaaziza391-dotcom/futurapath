@@ -34,6 +34,15 @@ export const translations: Translation = {
     French: 'Compte',
     German: 'Konto',
   },
+  jobs: {
+    English: 'Jobs',
+    Uzbek: "Ish o'rinlari",
+    Turkish: 'İşler',
+    Russian: 'Вакансии',
+    Spanish: 'Empleos',
+    French: 'Emplois',
+    German: 'Jobs',
+  },
   home: {
     English: 'Home',
     Uzbek: 'Asosiy',
@@ -224,6 +233,7 @@ export const translations: Translation = {
     Turkish: 'Hesabı Sil',
     Russian: 'Удалить аккаунт',
   },
+
 
   // Chat.tsx
   aiBuddy: {

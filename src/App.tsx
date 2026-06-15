@@ -6,8 +6,9 @@ import ProfileSetup from './components/ProfileSetup';
 import Chat from './components/Chat';
 import Account from './components/Account';
 import EconomyTab from './components/EconomyTab';
+import JobsTab from './components/JobsTab';
 import LanguageSelector from './components/LanguageSelector';
-import { LogIn, LogOut, LayoutDashboard, MessageSquare, User as UserIcon, Loader2, TrendingUp } from 'lucide-react';
+import { LogIn, LogOut, LayoutDashboard, MessageSquare, User as UserIcon, Loader2, TrendingUp, Briefcase } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from './lib/translations';
 
@@ -15,7 +16,7 @@ export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'chat' | 'profile' | 'economy'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'chat' | 'profile' | 'economy' | 'jobs'>('dashboard');
   const [language, setLanguage] = useState<string>('English');
 
   useEffect(() => {
@@ -133,6 +134,7 @@ export default function App() {
               <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-4 h-4" />} label={t('dashboard', language)} />
               <NavButton active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare className="w-4 h-4" />} label={t('advisor', language)} />
               <NavButton active={activeTab === 'economy'} onClick={() => setActiveTab('economy')} icon={<TrendingUp className="w-4 h-4" />} label="Economy" />
+              <NavButton active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} icon={<Briefcase className="w-4 h-4" />} label={t('jobs', language)} />
               <NavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<UserIcon className="w-4 h-4" />} label={t('account', language)} />
             </div>
             <button onClick={logout} className="p-2 text-gray-400 hover:text-white transition-colors" title="Logout">
@@ -154,11 +156,18 @@ export default function App() {
               <Chat profile={profile} language={language} />
             </motion.div>
           )}
-          {activeTab === 'economy' && (
+         {activeTab === 'economy' && (
             <motion.div key="economy" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
               <EconomyTab country={profile.country || 'Global'} language={language} />
             </motion.div>
           )}
+          {activeTab === 'jobs' && (
+            <motion.div key="jobs" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+              <JobsTab profile={profile} language={language} />
+            </motion.div>
+          )}
+       
+      
           {activeTab === 'profile' && (
             <motion.div key="profile" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
               <Account profile={profile} onUpdate={handleProfileUpdate} language={language} onLanguageChange={setLanguage} />
@@ -172,6 +181,7 @@ export default function App() {
           <MobileNavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-6 h-6" />} label={t('home', language)} />
           <MobileNavButton active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare className="w-6 h-6" />} label={t('advisor', language)} />
           <MobileNavButton active={activeTab === 'economy'} onClick={() => setActiveTab('economy')} icon={<TrendingUp className="w-6 h-6" />} label="Economy" />
+          <MobileNavButton active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} icon={<Briefcase className="w-6 h-6" />} label={t('jobs', language)} />
           <MobileNavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<UserIcon className="w-6 h-6" />} label={t('account', language)} />
         </div>
       </div>
