@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Briefcase, MapPin, Building2, Clock, ExternalLink, Search, Wifi } from 'lucide-react';
-import { fetchJobs, JobListing, JobsApiError } from '../services/jobsAPI';
+import { fetchJobs, JobListing, JobsApiError } from '../services/jobsApi';
 import { getCountryISO } from '../lib/languages';
 import { UserProfile } from '../types';
 
