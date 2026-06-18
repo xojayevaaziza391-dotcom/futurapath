@@ -1,10 +1,11 @@
+cat > /home/claude/Dashboard.tsx << 'DASHBOARD_EOF'
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Recommendation, CareerPrediction } from '../types';
 import { db, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, getDocs } from '../firebase';
-import { generateRecommendations, getMarketPredictions, analyzeTrends, getUniversityInfo, getCareerDetails } from '../services/gemini';
+import { generateRecommendations, getMarketPredictions, analyzeTrends, getUniversityInfo, getCareerDetails, analyzeSkillGap } from '../services/gemini';
 import { speakText } from '../services/ttsService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area } from 'recharts';
-import { TrendingUp, AlertTriangle, CheckCircle2, ArrowRight, Sparkles, RefreshCw, Loader2, BarChart2, GraduationCap, Volume2, X, MapPin, ExternalLink, Award, Briefcase, TrendingDown, Target } from 'lucide-react';
+import { TrendingUp, AlertTriangle, CheckCircle2, ArrowRight, Sparkles, RefreshCw, Loader2, BarChart2, GraduationCap, Volume2, X, MapPin, ExternalLink, Award, Briefcase, TrendingDown, Target, Wand2, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from '../lib/translations';
 import { getCountryFlag } from '../lib/languages';
@@ -29,6 +30,12 @@ export default function Dashboard({ profile, language }: DashboardProps) {
   const [selectedCareerTrend, setSelectedCareerTrend] = useState<string | null>(null);
   const [careerInsightData, setCareerInsightData] = useState<any>(null);
   const [isLoadingCareerInsight, setIsLoadingCareerInsight] = useState(false);
+
+  // Skills Gap Analyzer state
+  const [skillInput, setSkillInput] = useState('');
+  const [currentSkillsList, setCurrentSkillsList] = useState<string[]>([]);
+  const [skillGapResult, setSkillGapResult] = useState<any>(null);
+  const [isAnalyzingSkills, setIsAnalyzingSkills] = useState(false);
 
   const marketTrends = React.useMemo(() => {
     if (rawMarketTrends.length === 0) return [];
@@ -147,6 +154,39 @@ export default function Dashboard({ profile, language }: DashboardProps) {
       console.error('Error analyzing trends:', error);
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const openRoadmap = (rec: Recommendation) => {
+    setSelectedRoadmap(rec);
+    setCurrentSkillsList(profile.skills || []);
+    setSkillGapResult(null);
+    setSkillInput('');
+  };
+
+  const handleAddSkill = () => {
+    const skill = skillInput.trim();
+    if (skill && !currentSkillsList.includes(skill)) {
+      setCurrentSkillsList(prev => [...prev, skill]);
+    }
+    setSkillInput('');
+  };
+
+  const handleRemoveSkill = (skill: string) => {
+    setCurrentSkillsList(prev => prev.filter(s => s !== skill));
+  };
+
+  const handleAnalyzeSkillGap = async () => {
+    if (!selectedRoadmap) return;
+    setIsAnalyzingSkills(true);
+    setSkillGapResult(null);
+    try {
+      const result = await analyzeSkillGap(selectedRoadmap.careerName, currentSkillsList, language);
+      setSkillGapResult(result);
+    } catch (error) {
+      console.error('Error analyzing skill gap:', error);
+    } finally {
+      setIsAnalyzingSkills(false);
     }
   };
 
@@ -323,7 +363,7 @@ export default function Dashboard({ profile, language }: DashboardProps) {
                         </div>
                       </div>
                     </div>
-                    <button onClick={() => setSelectedRoadmap(rec)} className="w-full py-3 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all">
+                    <button onClick={() => openRoadmap(rec)} className="w-full py-3 bg-white/5 hover:bg-white/10 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all">
                       {t('viewRoadmap', language)}<ArrowRight className="w-4 h-4" />
                     </button>
                   </motion.div>
@@ -394,6 +434,84 @@ export default function Dashboard({ profile, language }: DashboardProps) {
                     })}
                   </div>
                 </div>
+
+                {/* Skills Gap Analyzer */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center gap-2 text-[#ff4e00] font-bold uppercase text-xs">
+                    <Wand2 className="w-4 h-4" />
+                    Skills Gap Analyzer
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-400">Your current skills</label>
+                    <div className="flex flex-wrap gap-2">
+                      {currentSkillsList.map((skill) => (
+                        <span key={skill} className="flex items-center gap-1.5 px-2.5 py-1 bg-white/10 rounded-lg text-xs text-gray-200">
+                          {skill}
+                          <button onClick={() => handleRemoveSkill(skill)} className="text-gray-500 hover:text-red-400 transition-colors">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={skillInput}
+                        onChange={(e) => setSkillInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddSkill(); } }}
+                        placeholder="Add a skill..."
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 outline-none focus:ring-1 focus:ring-[#ff4e00]"
+                      />
+                      <button onClick={handleAddSkill} className="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleAnalyzeSkillGap}
+                    disabled={isAnalyzingSkills}
+                    className="w-full py-2.5 bg-[#ff4e00] hover:bg-[#ff6a2a] rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                  >
+                    {isAnalyzingSkills ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    Analyze Skill Gap
+                  </button>
+
+                  {skillGapResult && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-4 pt-2">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs text-gray-400">
+                          <span>Skill Match</span>
+                          <span className="text-[#ff4e00] font-bold">{skillGapResult.matchPercent}%</span>
+                        </div>
+                        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                          <div className="h-full bg-[#ff4e00] rounded-full transition-all duration-500" style={{ width: `${skillGapResult.matchPercent}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {skillGapResult.missingSkills?.map((item: any, idx: number) => (
+                          <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-3 space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-sm text-white">{item.skill}</span>
+                              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${item.priority === 'high' ? 'bg-red-500/10 text-red-400' : item.priority === 'medium' ? 'bg-yellow-500/10 text-yellow-400' : 'bg-green-500/10 text-green-400'}`}>
+                                {item.priority}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-400">{item.reason}</p>
+                            {item.courseLink && (
+                              <a href={item.courseLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] bg-[#ff4e00]/10 hover:bg-[#ff4e00]/20 px-2 py-0.5 rounded-full text-[#ff4e00] transition-all">
+                                📚 Free Course
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+
                 {/* Pro Tip */}
                 <div className="p-4 bg-[#ff4e00]/5 border border-[#ff4e00]/20 rounded-2xl">
                   <div className="flex items-start gap-3">
@@ -555,3 +673,5 @@ function RiskItem({ label, level, color }: { label: string, level: string, color
     </div>
   );
 }
+DASHBOARD_EOF
+echo 
