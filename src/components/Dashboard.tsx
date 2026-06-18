@@ -1,4 +1,3 @@
-cat > /home/claude/Dashboard.tsx << 'DASHBOARD_EOF'
 import React, { useState, useEffect } from 'react';
 import { UserProfile, Recommendation, CareerPrediction } from '../types';
 import { db, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, getDocs } from '../firebase';
