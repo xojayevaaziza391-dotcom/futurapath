@@ -8,17 +8,18 @@ import Account from './components/Account';
 import EconomyTab from './components/EconomyTab';
 import JobsTab from './components/JobsTab';
 import NewsTab from './components/NewsTab';
-import { Newspaper } from 'lucide-react'; // add Newspaper to existing lucide import
 import LanguageSelector from './components/LanguageSelector';
-import { LogIn, LogOut, LayoutDashboard, MessageSquare, User as UserIcon, Loader2, TrendingUp, Briefcase } from 'lucide-react';
+import { LogIn, LogOut, LayoutDashboard, MessageSquare, User as UserIcon, Loader2, TrendingUp, Briefcase, Newspaper } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from './lib/translations';
+
+type ActiveTab = 'dashboard' | 'chat' | 'economy' | 'jobs' | 'news' | 'profile';
 
 export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  useState<'dashboard' | 'chat' | 'profile' | 'economy' | 'jobs' | 'news'>('dashboard');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
   const [language, setLanguage] = useState<string>('English');
 
   useEffect(() => {
@@ -50,7 +51,6 @@ export default function App() {
       updatedAt: serverTimestamp(),
       createdAt: profile?.createdAt || serverTimestamp(),
     } as UserProfile;
-
     await setDoc(doc(db, 'users', user.uid), updatedProfile);
     setProfile(updatedProfile);
     if (!profile) setActiveTab('dashboard');
@@ -136,8 +136,8 @@ export default function App() {
               <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-4 h-4" />} label={t('dashboard', language)} />
               <NavButton active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare className="w-4 h-4" />} label={t('advisor', language)} />
               <NavButton active={activeTab === 'economy'} onClick={() => setActiveTab('economy')} icon={<TrendingUp className="w-4 h-4" />} label="Economy" />
-              <NavButton active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} icon={<Briefcase className="w-4 h-4" />} label={t('jobs', language)} />
-              <NavButton active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={<Newspaper className="w-4 h-4" />} label={t('news', language)} />
+              <NavButton active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} icon={<Briefcase className="w-4 h-4" />} label="Jobs" />
+              <NavButton active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={<Newspaper className="w-4 h-4" />} label="News" />
               <NavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<UserIcon className="w-4 h-4" />} label={t('account', language)} />
             </div>
             <button onClick={logout} className="p-2 text-gray-400 hover:text-white transition-colors" title="Logout">
@@ -159,7 +159,7 @@ export default function App() {
               <Chat profile={profile} language={language} />
             </motion.div>
           )}
-         {activeTab === 'economy' && (
+          {activeTab === 'economy' && (
             <motion.div key="economy" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
               <EconomyTab country={profile.country || 'Global'} language={language} />
             </motion.div>
@@ -169,14 +169,11 @@ export default function App() {
               <JobsTab profile={profile} language={language} />
             </motion.div>
           )}
-         
-         {activeTab === 'news' && (
-           <motion.div key="news" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-               <NewsTab language={language} />
-           </motion.div>
-)}
-       
-      
+          {activeTab === 'news' && (
+            <motion.div key="news" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+              <NewsTab language={language} />
+            </motion.div>
+          )}
           {activeTab === 'profile' && (
             <motion.div key="profile" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
               <Account profile={profile} onUpdate={handleProfileUpdate} language={language} onLanguageChange={setLanguage} />
@@ -190,8 +187,8 @@ export default function App() {
           <MobileNavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-6 h-6" />} label={t('home', language)} />
           <MobileNavButton active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare className="w-6 h-6" />} label={t('advisor', language)} />
           <MobileNavButton active={activeTab === 'economy'} onClick={() => setActiveTab('economy')} icon={<TrendingUp className="w-6 h-6" />} label="Economy" />
-          <MobileNavButton active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} icon={<Briefcase className="w-6 h-6" />} label={t('jobs', language)} />
-          <MobileNavButton active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={<Newspaper className="w-6 h-6" />} label={t('news', language)} />
+          <MobileNavButton active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} icon={<Briefcase className="w-6 h-6" />} label="Jobs" />
+          <MobileNavButton active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={<Newspaper className="w-6 h-6" />} label="News" />
           <MobileNavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<UserIcon className="w-6 h-6" />} label={t('account', language)} />
         </div>
       </div>
