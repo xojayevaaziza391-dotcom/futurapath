@@ -8,9 +8,8 @@ import Account from './components/Account';
 import EconomyTab from './components/EconomyTab';
 import JobsTab from './components/JobsTab';
 import NewsTab from './components/NewsTab';
-import { Newspaper } from 'lucide-react'; // add Newspaper to existing lucide import
 import LanguageSelector from './components/LanguageSelector';
-import { LogIn, LogOut, LayoutDashboard, MessageSquare, User as UserIcon, Loader2, TrendingUp, Briefcase } from 'lucide-react';
+import { LogIn, LogOut, LayoutDashboard, MessageSquare, User as UserIcon, Loader2, TrendingUp, Briefcase, Newspaper } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { t } from './lib/translations';
 
@@ -18,7 +17,7 @@ export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  useState<'dashboard' | 'chat' | 'profile' | 'economy' | 'jobs' | 'news'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'chat' | 'profile' | 'economy' | 'jobs' | 'news'>('dashboard');
   const [language, setLanguage] = useState<string>('English');
 
   useEffect(() => {
