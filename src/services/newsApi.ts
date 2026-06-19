@@ -1,6 +1,6 @@
-// NewsAPI.org service
-// Sign up at https://newsapi.org/register to get a free API key
-// Add to .env as VITE_NEWSAPI_KEY=your_key_here
+// GNews API service - works on deployed sites (free tier)
+// Sign up at https://gnews.io to get a free API key
+// Add to .env as VITE_GNEWS_API_KEY=your_key_here
 
 export interface NewsArticle {
     id: string;
@@ -13,54 +13,59 @@ export interface NewsArticle {
     category: 'career' | 'tech';
   }
   
-  interface NewsAPIArticle {
+  interface GNewsArticle {
     title: string;
-    description: string | null;
+    description: string;
     url: string;
-    source: { name: string };
+    image: string | null;
     publishedAt: string;
-    urlToImage: string | null;
+    source: { name: string; url: string };
   }
   
-  interface NewsAPIResponse {
-    status: string;
-    articles: NewsAPIArticle[];
-    message?: string;
+  interface GNewsResponse {
+    totalArticles: number;
+    articles: GNewsArticle[];
+    errors?: string[];
   }
   
-  const API_KEY = import.meta.env.VITE_NEWSAPI_KEY as string | undefined;
-  const BASE_URL = 'https://newsapi.org/v2';
+  const API_KEY = import.meta.env.VITE_GNEWS_API_KEY as string | undefined;
+  const BASE_URL = 'https://gnews.io/api/v4';
   
   export class NewsApiError extends Error {}
   
   async function fetchNews(query: string, category: 'career' | 'tech'): Promise<NewsArticle[]> {
-    if (!API_KEY) throw new NewsApiError('Missing VITE_NEWSAPI_KEY in environment.');
+    if (!API_KEY) throw new NewsApiError('Missing VITE_GNEWS_API_KEY in environment.');
   
     const params = new URLSearchParams({
       q: query,
-      language: 'en',
-      sortBy: 'publishedAt',
-      pageSize: '10',
-      apiKey: API_KEY,
+      lang: 'en',
+      max: '10',
+      sortby: 'publishedAt',
+      apikey: API_KEY,
     });
   
-    const response = await fetch(`${BASE_URL}/everything?${params.toString()}`);
-    const json: NewsAPIResponse = await response.json();
+    const response = await fetch(`${BASE_URL}/search?${params.toString()}`);
   
-    if (json.status !== 'ok') {
-      throw new NewsApiError(json.message || 'Failed to fetch news.');
+    if (!response.ok) {
+      if (response.status === 403) throw new NewsApiError('Invalid GNews API key.');
+      if (response.status === 429) throw new NewsApiError('News rate limit reached. Please try again later.');
+      throw new NewsApiError(`News fetch failed (${response.status}).`);
     }
   
+    const json: GNewsResponse = await response.json();
+  
+    if (json.errors?.length) throw new NewsApiError(json.errors[0]);
+  
     return json.articles
-      .filter(a => a.title && a.description && !a.title.includes('[Removed]'))
+      .filter(a => a.title && a.description)
       .map((a, i): NewsArticle => ({
         id: `${category}-${i}-${a.publishedAt}`,
         title: a.title,
-        description: a.description!,
+        description: a.description,
         url: a.url,
         source: a.source.name,
         publishedAt: a.publishedAt,
-        imageUrl: a.urlToImage || undefined,
+        imageUrl: a.image || undefined,
         category,
       }));
   }
