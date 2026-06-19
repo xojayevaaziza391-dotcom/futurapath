@@ -672,5 +672,3 @@ function RiskItem({ label, level, color }: { label: string, level: string, color
     </div>
   );
 }
-DASHBOARD_EOF
-echo 
