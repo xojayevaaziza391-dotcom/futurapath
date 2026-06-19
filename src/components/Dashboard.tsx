@@ -98,11 +98,11 @@ export default function Dashboard({ profile, language }: DashboardProps) {
       const latestRec = recommendations[0];
       const profileUpdated = profile.updatedAt?.toDate?.() || new Date(profile.updatedAt?.seconds * 1000 || 0);
       const recCreated = latestRec.createdAt?.toDate?.() || new Date(latestRec.createdAt?.seconds * 1000 || 0);
-      if (profileUpdated.getTime() > recCreated.getTime() + 5000 || latestRec.language !== language) {
+      if (profileUpdated.getTime() > recCreated.getTime() + 5000 && latestRec.language !== language) {
         handleGenerateRecs();
       }
     }
-  }, [profile.updatedAt, recommendations.length, isGenerating, language]);
+  }, [profile.updatedAt, recommendations.length, language]);
 
   useEffect(() => {
     const fetchTrends = async () => {
