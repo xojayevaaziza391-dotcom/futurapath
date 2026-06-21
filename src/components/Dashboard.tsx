@@ -35,7 +35,6 @@ export default function Dashboard({ profile, language }: DashboardProps) {
   const [currentSkillsList, setCurrentSkillsList] = useState<string[]>([]);
   const [skillGapResult, setSkillGapResult] = useState<any>(null);
   const [isAnalyzingSkills, setIsAnalyzingSkills] = useState(false);
-  const [isAnalyzingSkills, setIsAnalyzingSkills] = useState(false);
   const lastRegenTriggerRef = useRef<string | null>(null);
   const marketTrends = React.useMemo(() => {
     if (rawMarketTrends.length === 0) return [];
