@@ -1,7 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { getRealEconomicData } from "./worldbank";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY! });
 
 // Simple local cache to speed up the app
 const cache: { [key: string]: any } = {};
@@ -407,4 +407,64 @@ export const analyzeSkillGap = async (careerName: string, currentSkills: string[
   });
 
   return JSON.parse(response.text);
+};
+export const getSalaryData = async (career: string, country: string, language: string = 'English') => {
+  const cacheKey = `salary_${career}_${country}_${language}`;
+  if (cache[cacheKey]) return cache[cacheKey];
+ 
+  const model = "gemini-2.0-flash";
+  const prompt = `
+    Provide salary data for a "${career}" in ${country}.
+    
+    CRITICAL: All descriptive text MUST be in ${language}.
+    
+    Return as JSON:
+    {
+      "averageSalary": number (annual in USD),
+      "minSalary": number (annual in USD),
+      "maxSalary": number (annual in USD),
+      "currency": "USD",
+      "trend": [
+        { "year": 2020, "salary": number },
+        { "year": 2021, "salary": number },
+        { "year": 2022, "salary": number },
+        { "year": 2023, "salary": number },
+        { "year": 2024, "salary": number },
+        { "year": 2025, "salary": number },
+        { "year": 2026, "salary": number }
+      ],
+      "countryComparison": [
+        { "country": "country name", "averageSalary": number }
+      ],
+      "insight": "2-3 sentence insight about salary trends for this career in ${language}"
+    }
+    
+    Include 5 countries in countryComparison including ${country}.
+    Base data on real market rates. countryComparison countries should be relevant neighbors or major economies.
+  `;
+ 
+  const response = await ai.models.generateContent({
+    model,
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          averageSalary: { type: Type.NUMBER },
+          minSalary: { type: Type.NUMBER },
+          maxSalary: { type: Type.NUMBER },
+          currency: { type: Type.STRING },
+          trend: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { year: { type: Type.NUMBER }, salary: { type: Type.NUMBER } }, required: ["year", "salary"] } },
+          countryComparison: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { country: { type: Type.STRING }, averageSalary: { type: Type.NUMBER } }, required: ["country", "averageSalary"] } },
+          insight: { type: Type.STRING },
+        },
+        required: ["averageSalary", "minSalary", "maxSalary", "currency", "trend", "countryComparison", "insight"],
+      },
+    },
+  });
+ 
+  const data = JSON.parse(response.text);
+  cache[cacheKey] = data;
+  return data;
 };

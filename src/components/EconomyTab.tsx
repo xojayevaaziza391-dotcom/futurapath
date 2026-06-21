@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Users, BarChart3 } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Users, BarChart3, Search } from 'lucide-react';
+import { getRealEconomicData, EconomicData } from '../services/worldbank';
+import { getSalaryData } from '../services/gemini';
 
 interface EconomyTabProps {
   country: string;
   language: string;
 }
 
-interface EconomyData {
-  gdpGrowth: number | null;
-  unemploymentRate: number | null;
-  inflationRate: number | null;
-  gdpPerCapita: number | null;
+interface SalaryData {
+  averageSalary: number;
+  minSalary: number;
+  maxSalary: number;
+  currency: string;
+  trend: { year: number; salary: number }[];
+  countryComparison: { country: string; averageSalary: number }[];
+  insight: string;
 }
 
 const economyT: { [key: string]: { [lang: string]: string } } = {
@@ -22,32 +27,6 @@ const economyT: { [key: string]: { [lang: string]: string } } = {
     Spanish: 'Resumen Económico',
     French: 'Aperçu Économique',
     German: 'Wirtschaftsüberblick',
-    Chinese: '经济概览',
-    Japanese: '経済概要',
-    Korean: '경제 개요',
-    Arabic: 'نظرة عامة على الاقتصاد',
-    Hindi: 'अर्थव्यवस्था अवलोकन',
-    Portuguese: 'Visão Geral da Economia',
-    Italian: 'Panoramica Economica',
-    Dutch: 'Economisch Overzicht',
-    Polish: 'Przegląd Gospodarczy',
-    Swedish: 'Ekonomisk Översikt',
-    Norwegian: 'Økonomisk Oversikt',
-    Danish: 'Økonomisk Oversigt',
-    Finnish: 'Talouden Yleiskatsaus',
-    Ukrainian: 'Огляд економіки',
-    Romanian: 'Prezentare Economică',
-    Hungarian: 'Gazdasági Áttekintés',
-    Czech: 'Ekonomický Přehled',
-    Greek: 'Οικονομική Επισκόπηση',
-    Hebrew: 'סקירה כלכלית',
-    Indonesian: 'Tinjauan Ekonomi',
-    Malay: 'Gambaran Keseluruhan Ekonomi',
-    Thai: 'ภาพรวมเศรษฐกิจ',
-    Vietnamese: 'Tổng Quan Kinh Tế',
-    Persian: 'مرور اقتصادی',
-    Swahili: 'Muhtasari wa Uchumi',
-    Kazakh: 'Экономикаға шолу',
   },
   realData: {
     English: 'Real Data (World Bank)',
@@ -57,207 +36,26 @@ const economyT: { [key: string]: { [lang: string]: string } } = {
     Spanish: 'Datos Reales (Banco Mundial)',
     French: 'Données Réelles (Banque Mondiale)',
     German: 'Echte Daten (Weltbank)',
-    Chinese: '真实数据（世界银行）',
-    Japanese: '実際のデータ（世界銀行）',
-    Korean: '실제 데이터 (세계은행)',
-    Arabic: 'بيانات حقيقية (البنك الدولي)',
-    Hindi: 'वास्तविक डेटा (विश्व बैंक)',
-    Portuguese: 'Dados Reais (Banco Mundial)',
-    Italian: 'Dati Reali (Banca Mondiale)',
-    Dutch: 'Echte Gegevens (Wereldbank)',
-    Polish: 'Prawdziwe Dane (Bank Światowy)',
-    Swedish: 'Verkliga Data (Världsbanken)',
-    Norwegian: 'Ekte Data (Verdensbanken)',
-    Danish: 'Virkelige Data (Verdensbanken)',
-    Finnish: 'Todellinen Data (Maailmanpankki)',
-    Ukrainian: 'Реальні дані (Світовий банк)',
-    Romanian: 'Date Reale (Banca Mondială)',
-    Hungarian: 'Valós Adatok (Világbank)',
-    Czech: 'Skutečná Data (Světová banka)',
-    Greek: 'Πραγματικά Δεδομένα (Παγκόσμια Τράπεζα)',
-    Hebrew: 'נתונים אמיתיים (הבנק העולמי)',
-    Indonesian: 'Data Nyata (Bank Dunia)',
-    Malay: 'Data Sebenar (Bank Dunia)',
-    Thai: 'ข้อมูลจริง (ธนาคารโลก)',
-    Vietnamese: 'Dữ Liệu Thực (Ngân hàng Thế giới)',
-    Persian: 'داده‌های واقعی (بانک جهانی)',
-    Swahili: 'Data Halisi (Benki ya Dunia)',
-    Kazakh: 'Нақты деректер (Дүниежүзілік банк)',
   },
   gdpGrowth: {
-    English: 'GDP Growth',
-    Uzbek: "YaIM O'sishi",
-    Turkish: 'GSYİH Büyümesi',
-    Russian: 'Рост ВВП',
-    Spanish: 'Crecimiento del PIB',
-    French: 'Croissance du PIB',
-    German: 'BIP-Wachstum',
-    Chinese: 'GDP增长',
-    Japanese: 'GDP成長率',
-    Korean: 'GDP 성장률',
-    Arabic: 'نمو الناتج المحلي الإجمالي',
-    Hindi: 'जीडीपी वृद्धि',
-    Portuguese: 'Crescimento do PIB',
-    Italian: 'Crescita del PIL',
-    Dutch: 'BBP-groei',
-    Polish: 'Wzrost PKB',
-    Swedish: 'BNP-tillväxt',
-    Norwegian: 'BNP-vekst',
-    Danish: 'BNP-vækst',
-    Finnish: 'BKT-kasvu',
-    Ukrainian: 'Зростання ВВП',
-    Romanian: 'Creștere PIB',
-    Hungarian: 'GDP Növekedés',
-    Czech: 'Růst HDP',
-    Greek: 'Ανάπτυξη ΑΕΠ',
-    Hebrew: 'צמיחת תמ"ג',
-    Indonesian: 'Pertumbuhan PDB',
-    Malay: 'Pertumbuhan KDNK',
-    Thai: 'การเติบโตของ GDP',
-    Vietnamese: 'Tăng Trưởng GDP',
-    Persian: 'رشد تولید ناخالص داخلی',
-    Swahili: 'Ukuaji wa Pato la Taifa',
-    Kazakh: 'ЖІӨ өсімі',
+    English: 'GDP Growth', Uzbek: "YaIM O'sishi", Turkish: 'GSYİH Büyümesi', Russian: 'Рост ВВП',
+    Spanish: 'Crecimiento del PIB', French: 'Croissance du PIB', German: 'BIP-Wachstum',
   },
   unemployment: {
-    English: 'Unemployment',
-    Uzbek: 'Ishsizlik',
-    Turkish: 'İşsizlik',
-    Russian: 'Безработица',
-    Spanish: 'Desempleo',
-    French: 'Chômage',
-    German: 'Arbeitslosigkeit',
-    Chinese: '失业率',
-    Japanese: '失業率',
-    Korean: '실업률',
-    Arabic: 'البطالة',
-    Hindi: 'बेरोजगारी',
-    Portuguese: 'Desemprego',
-    Italian: 'Disoccupazione',
-    Dutch: 'Werkloosheid',
-    Polish: 'Bezrobocie',
-    Swedish: 'Arbetslöshet',
-    Norwegian: 'Arbeidsledighet',
-    Danish: 'Arbejdsløshed',
-    Finnish: 'Työttömyys',
-    Ukrainian: 'Безробіття',
-    Romanian: 'Șomaj',
-    Hungarian: 'Munkanélküliség',
-    Czech: 'Nezaměstnanost',
-    Greek: 'Ανεργία',
-    Hebrew: 'אבטלה',
-    Indonesian: 'Pengangguran',
-    Malay: 'Pengangguran',
-    Thai: 'การว่างงาน',
-    Vietnamese: 'Thất Nghiệp',
-    Persian: 'بیکاری',
-    Swahili: 'Ukosefu wa Ajira',
-    Kazakh: 'Жұмыссыздық',
+    English: 'Unemployment', Uzbek: 'Ishsizlik', Turkish: 'İşsizlik', Russian: 'Безработица',
+    Spanish: 'Desempleo', French: 'Chômage', German: 'Arbeitslosigkeit',
   },
   inflation: {
-    English: 'Inflation',
-    Uzbek: 'Inflyatsiya',
-    Turkish: 'Enflasyon',
-    Russian: 'Инфляция',
-    Spanish: 'Inflación',
-    French: 'Inflation',
-    German: 'Inflation',
-    Chinese: '通货膨胀',
-    Japanese: 'インフレ',
-    Korean: '인플레이션',
-    Arabic: 'التضخم',
-    Hindi: 'मुद्रास्फीति',
-    Portuguese: 'Inflação',
-    Italian: 'Inflazione',
-    Dutch: 'Inflatie',
-    Polish: 'Inflacja',
-    Swedish: 'Inflation',
-    Norwegian: 'Inflasjon',
-    Danish: 'Inflation',
-    Finnish: 'Inflaatio',
-    Ukrainian: 'Інфляція',
-    Romanian: 'Inflație',
-    Hungarian: 'Infláció',
-    Czech: 'Inflace',
-    Greek: 'Πληθωρισμός',
-    Hebrew: 'אינפלציה',
-    Indonesian: 'Inflasi',
-    Malay: 'Inflasi',
-    Thai: 'อัตราเงินเฟ้อ',
-    Vietnamese: 'Lạm Phát',
-    Persian: 'تورم',
-    Swahili: 'Mfumuko wa Bei',
-    Kazakh: 'Инфляция',
+    English: 'Inflation', Uzbek: 'Inflyatsiya', Turkish: 'Enflasyon', Russian: 'Инфляция',
+    Spanish: 'Inflación', French: 'Inflation', German: 'Inflation',
   },
   gdpPerCapita: {
-    English: 'GDP per Capita',
-    Uzbek: 'Aholi Boshiga YaIM',
-    Turkish: 'Kişi Başı GSYİH',
-    Russian: 'ВВП на душу населения',
-    Spanish: 'PIB per Cápita',
-    French: 'PIB par Habitant',
-    German: 'BIP pro Kopf',
-    Chinese: '人均GDP',
-    Japanese: '一人当たりGDP',
-    Korean: '1인당 GDP',
-    Arabic: 'الناتج المحلي الإجمالي للفرد',
-    Hindi: 'प्रति व्यक्ति जीडीपी',
-    Portuguese: 'PIB per Capita',
-    Italian: 'PIL pro Capite',
-    Dutch: 'BBP per Hoofd',
-    Polish: 'PKB per Capita',
-    Swedish: 'BNP per Capita',
-    Norwegian: 'BNP per Innbygger',
-    Danish: 'BNP per Indbygger',
-    Finnish: 'BKT per Asukas',
-    Ukrainian: 'ВВП на душу населення',
-    Romanian: 'PIB pe Cap de Locuitor',
-    Hungarian: 'GDP per Fő',
-    Czech: 'HDP na Obyvatele',
-    Greek: 'ΑΕΠ ανά Κάτοικο',
-    Hebrew: 'תמ"ג לנפש',
-    Indonesian: 'PDB per Kapita',
-    Malay: 'KDNK per Kapita',
-    Thai: 'GDP ต่อหัว',
-    Vietnamese: 'GDP Bình Quân Đầu Người',
-    Persian: 'تولید ناخالص داخلی سرانه',
-    Swahili: 'Pato la Taifa kwa Kila Mtu',
-    Kazakh: 'Жан басына шаққандағы ЖІӨ',
+    English: 'GDP per Capita', Uzbek: 'Aholi Boshiga YaIM', Turkish: 'Kişi Başı GSYİH', Russian: 'ВВП на душу населения',
+    Spanish: 'PIB per Cápita', French: 'PIB par Habitant', German: 'BIP pro Kopf',
   },
   careerImpact: {
-    English: 'Career Impact',
-    Uzbek: "Karyeraga Ta'siri",
-    Turkish: 'Kariyer Etkisi',
-    Russian: 'Влияние на карьеру',
-    Spanish: 'Impacto en la Carrera',
-    French: 'Impact sur la Carrière',
-    German: 'Karriereauswirkungen',
-    Chinese: '职业影响',
-    Japanese: 'キャリアへの影響',
-    Korean: '경력 영향',
-    Arabic: 'التأثير المهني',
-    Hindi: 'करियर प्रभाव',
-    Portuguese: 'Impacto na Carreira',
-    Italian: 'Impatto sulla Carriera',
-    Dutch: 'Carrière Impact',
-    Polish: 'Wpływ na Karierę',
-    Swedish: 'Karriärpåverkan',
-    Norwegian: 'Karrierepåvirkning',
-    Danish: 'Karrierepåvirkning',
-    Finnish: 'Uravaikutus',
-    Ukrainian: 'Вплив на кар\'єру',
-    Romanian: 'Impact asupra Carierei',
-    Hungarian: 'Karrierhatás',
-    Czech: 'Dopad na Kariéru',
-    Greek: 'Επίδραση στην Καριέρα',
-    Hebrew: 'השפעה על הקריירה',
-    Indonesian: 'Dampak Karir',
-    Malay: 'Impak Kerjaya',
-    Thai: 'ผลกระทบต่ออาชีพ',
-    Vietnamese: 'Tác Động Nghề Nghiệp',
-    Persian: 'تأثیر شغلی',
-    Swahili: 'Athari kwa Kazi',
-    Kazakh: 'Мансапқа әсері',
+    English: 'Career Impact', Uzbek: "Karyeraga Ta'siri", Turkish: 'Kariyer Etkisi', Russian: 'Влияние на карьеру',
+    Spanish: 'Impacto en la Carrera', French: 'Impact sur la Carrière', German: 'Karriereauswirkungen',
   },
   careerImpactDesc: {
     English: "Based on {country}'s economic indicators, sectors like technology, healthcare, and finance show strong growth potential. Consider upskilling in data analysis and digital tools to stay competitive.",
@@ -267,32 +65,47 @@ const economyT: { [key: string]: { [lang: string]: string } } = {
     Spanish: "Basándonos en los indicadores económicos de {country}, sectores como tecnología, salud y finanzas muestran un fuerte potencial de crecimiento. Considere mejorar sus habilidades en análisis de datos.",
     French: "Sur la base des indicateurs économiques de {country}, des secteurs comme la technologie, la santé et la finance montrent un fort potentiel de croissance. Envisagez de vous perfectionner en analyse de données.",
     German: "Basierend auf den Wirtschaftsindikatoren von {country} zeigen Sektoren wie Technologie, Gesundheitswesen und Finanzen starkes Wachstumspotenzial. Erwägen Sie, Ihre Fähigkeiten in Datenanalyse zu erweitern.",
-    Chinese: "根据{country}的经济指标，科技、医疗和金融等行业显示出强劲的增长潜力。考虑提升数据分析和数字工具方面的技能以保持竞争力。",
-    Japanese: "{country}の経済指標に基づき、テクノロジー、ヘルスケア、金融などのセクターが強い成長可能性を示しています。競争力を維持するためにデータ分析スキルを向上させてください。",
-    Korean: "{country}의 경제 지표를 바탕으로 기술, 의료, 금융 분야가 강한 성장 잠재력을 보이고 있습니다. 경쟁력을 유지하기 위해 데이터 분석 역량을 향상시키세요.",
-    Arabic: "استناداً إلى المؤشرات الاقتصادية لـ {country}، تُظهر قطاعات التكنولوجيا والرعاية الصحية والمالية إمكانات نمو قوية. فكر في تطوير مهاراتك في تحليل البيانات.",
-    Hindi: "{country} के आर्थिक संकेतकों के आधार पर, प्रौद्योगिकी, स्वास्थ्य सेवा और वित्त जैसे क्षेत्र मजबूत विकास क्षमता दिखाते हैं। प्रतिस्पर्धी बने रहने के लिए डेटा विश्लेषण में कौशल विकसित करें।",
-    Portuguese: "Com base nos indicadores económicos de {country}, sectores como tecnologia, saúde e finanças mostram forte potencial de crescimento. Considere melhorar suas habilidades em análise de dados.",
-    Italian: "Sulla base degli indicatori economici di {country}, settori come tecnologia, sanità e finanza mostrano un forte potenziale di crescita. Considera di migliorare le tue competenze nell'analisi dei dati.",
-    Dutch: "Op basis van de economische indicatoren van {country} tonen sectoren zoals technologie, gezondheidszorg en financiën een sterk groeipotentieel. Overweeg uw vaardigheden in data-analyse te verbeteren.",
-    Polish: "Na podstawie wskaźników ekonomicznych {country}, sektory takie jak technologia, opieka zdrowotna i finanse wykazują silny potencjał wzrostu. Rozważ podniesienie kwalifikacji w zakresie analizy danych.",
-    Swedish: "Baserat på {country}s ekonomiska indikatorer visar sektorer som teknik, sjukvård och finans stark tillväxtpotential. Överväg att förbättra dina kunskaper inom dataanalys.",
-    Norwegian: "Basert på {country}s økonomiske indikatorer viser sektorer som teknologi, helsevesen og finans sterk vekstpotensial. Vurder å forbedre dine ferdigheter innen dataanalyse.",
-    Danish: "Baseret på {country}s økonomiske indikatorer viser sektorer som teknologi, sundhedsvæsen og finans stærkt vækstpotentiale. Overvej at forbedre dine færdigheder inden for dataanalyse.",
-    Finnish: "Perustuen {country}n taloudellisiin indikaattoreihin, teknologia-, terveydenhuolto- ja rahoitussektorit osoittavat vahvaa kasvupotentiaalia. Harkitse tietoanalyysitaitojen kehittämistä.",
-    Ukrainian: "На основі економічних показників {country} такі сектори, як технології, охорона здоров'я та фінанси, демонструють значний потенціал зростання. Розгляньте підвищення кваліфікації в галузі аналізу даних.",
-    Romanian: "Pe baza indicatorilor economici ai {country}, sectoare precum tehnologia, sănătatea și finanțele arată un potențial puternic de creștere. Luați în considerare îmbunătățirea abilităților de analiză a datelor.",
-    Hungarian: "A {country} gazdasági mutatói alapján az olyan szektorok, mint a technológia, az egészségügy és a pénzügy, erős növekedési potenciált mutatnak. Fontolja meg az adatelemzési készségek fejlesztését.",
-    Czech: "Na základě ekonomických ukazatelů {country} vykazují sektory jako technologie, zdravotnictví a finance silný růstový potenciál. Zvažte zlepšení dovedností v oblasti analýzy dat.",
-    Greek: "Βάσει των οικονομικών δεικτών της {country}, τομείς όπως η τεχνολογία, η υγειονομική περίθαλψη και τα χρηματοοικονομικά δείχνουν ισχυρό αναπτυξιακό δυναμικό.",
-    Hebrew: "בהתבסס על המדדים הכלכליים של {country}, מגזרים כמו טכנולוגיה, בריאות ופיננסים מראים פוטנציאל צמיחה חזק. שקול לשפר את כישוריך בניתוח נתונים.",
-    Indonesian: "Berdasarkan indikator ekonomi {country}, sektor seperti teknologi, kesehatan, dan keuangan menunjukkan potensi pertumbuhan yang kuat. Pertimbangkan untuk meningkatkan keterampilan analisis data.",
-    Malay: "Berdasarkan petunjuk ekonomi {country}, sektor seperti teknologi, penjagaan kesihatan dan kewangan menunjukkan potensi pertumbuhan yang kukuh. Pertimbangkan untuk meningkatkan kemahiran analisis data.",
-    Thai: "จากตัวชี้วัดเศรษฐกิจของ{country} ภาคส่วนอย่างเทคโนโลยี การดูแลสุขภาพ และการเงิน แสดงให้เห็นถึงศักยภาพการเติบโตที่แข็งแกร่ง พิจารณาพัฒนาทักษะการวิเคราะห์ข้อมูล",
-    Vietnamese: "Dựa trên các chỉ số kinh tế của {country}, các lĩnh vực như công nghệ, chăm sóc sức khỏe và tài chính cho thấy tiềm năng tăng trưởng mạnh mẽ. Hãy xem xét nâng cao kỹ năng phân tích dữ liệu.",
-    Persian: "بر اساس شاخص‌های اقتصادی {country}، بخش‌هایی مانند فناوری، مراقبت‌های بهداشتی و مالی پتانسیل رشد قوی نشان می‌دهند. ارتقاء مهارت‌های تحلیل داده را در نظر بگیرید.",
-    Swahili: "Kulingana na viashiria vya kiuchumi vya {country}, sekta kama teknolojia, afya na fedha zinaonyesha uwezo mkubwa wa ukuaji. Fikiria kuboresha ujuzi wako wa uchanganuzi wa data.",
-    Kazakh: "{country} экономикалық көрсеткіштеріне сәйкес технология, денсаулық сақтау және қаржы салалары күшті өсу әлеуетін көрсетеді. Деректерді талдау дағдыларын дамытуды қарастырыңыз.",
+  },
+  salaryTracker: {
+    English: 'Salary Tracker', Uzbek: 'Maosh Kuzatuvchisi', Turkish: 'Maaş Takipçisi', Russian: 'Трекер зарплат',
+    Spanish: 'Rastreador de Salarios', French: 'Suivi des Salaires', German: 'Gehalts-Tracker',
+  },
+  careerPlaceholder: {
+    English: 'e.g. Software Engineer', Uzbek: 'm.u. Dasturchi', Turkish: 'ör. Yazılım Mühendisi', Russian: 'напр. Инженер-программист',
+    Spanish: 'ej. Ingeniero de Software', French: 'ex. Ingénieur Logiciel', German: 'z.B. Softwareentwickler',
+  },
+  averageSalary: {
+    English: 'Average Salary', Uzbek: "O'rtacha Maosh", Turkish: 'Ortalama Maaş', Russian: 'Средняя зарплата',
+    Spanish: 'Salario Promedio', French: 'Salaire Moyen', German: 'Durchschnittsgehalt',
+  },
+  salaryRangeLabel: {
+    English: 'Salary Range', Uzbek: 'Maosh Oralig\'i', Turkish: 'Maaş Aralığı', Russian: 'Диапазон зарплат',
+    Spanish: 'Rango Salarial', French: 'Fourchette Salariale', German: 'Gehaltsspanne',
+  },
+  salaryTrend: {
+    English: 'Salary Trend (2020–2026)', Uzbek: 'Maosh Tendensiyasi (2020–2026)', Turkish: 'Maaş Trendi (2020–2026)', Russian: 'Тренд зарплат (2020–2026)',
+    Spanish: 'Tendencia Salarial (2020–2026)', French: 'Tendance Salariale (2020–2026)', German: 'Gehaltstrend (2020–2026)',
+  },
+  countryComparisonLabel: {
+    English: 'Country Comparison', Uzbek: 'Davlatlar Taqqoslash', Turkish: 'Ülke Karşılaştırması', Russian: 'Сравнение по странам',
+    Spanish: 'Comparación de Países', French: 'Comparaison par Pays', German: 'Ländervergleich',
+  },
+  salaryInsight: {
+    English: 'Insight', Uzbek: 'Tahlil', Turkish: 'İçgörü', Russian: 'Анализ',
+    Spanish: 'Perspectiva', French: 'Analyse', German: 'Einblick',
+  },
+  searchSalary: {
+    English: 'Search Salary', Uzbek: 'Maoshni Qidirish', Turkish: 'Maaş Ara', Russian: 'Найти зарплату',
+    Spanish: 'Buscar Salario', French: 'Rechercher Salaire', German: 'Gehalt Suchen',
+  },
+  errorLoadingSalary: {
+    English: 'Could not load salary data. Please try again.',
+    Uzbek: "Maosh ma'lumotlarini yuklab bo'lmadi. Qaytadan urinib ko'ring.",
+    Turkish: 'Maaş verileri yüklenemedi. Lütfen tekrar deneyin.',
+    Russian: 'Не удалось загрузить данные о зарплате. Попробуйте снова.',
+    Spanish: 'No se pudieron cargar los datos salariales. Inténtalo de nuevo.',
+    French: 'Impossible de charger les données salariales. Veuillez réessayer.',
+    German: 'Gehaltsdaten konnten nicht geladen werden. Bitte erneut versuchen.',
   },
 };
 
@@ -307,21 +120,41 @@ function et(key: string, language: string, replace?: { [k: string]: string }): s
 }
 
 export default function EconomyTab({ country, language }: EconomyTabProps) {
-  const [data, setData] = useState<EconomyData>({ gdpGrowth: null, unemploymentRate: null, inflationRate: null, gdpPerCapita: null });
+  const [data, setData] = useState<EconomicData>({ country, gdpGrowth: null, unemploymentRate: null, youthUnemployment: null, year: new Date().getFullYear() });
   const [loading, setLoading] = useState(true);
 
+  const [career, setCareer] = useState('');
+  const [salaryData, setSalaryData] = useState<SalaryData | null>(null);
+  const [salaryLoading, setSalaryLoading] = useState(false);
+  const [salaryError, setSalaryError] = useState<string | null>(null);
+
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
-    setTimeout(() => {
-      setData({
-        gdpGrowth: Math.round((Math.random() * 8 - 2) * 10) / 10,
-        unemploymentRate: Math.round((Math.random() * 15 + 2) * 10) / 10,
-        inflationRate: Math.round((Math.random() * 10 + 1) * 10) / 10,
-        gdpPerCapita: Math.round(Math.random() * 50000 + 5000),
-      });
-      setLoading(false);
-    }, 1000);
+    getRealEconomicData(country).then((result) => {
+      if (!cancelled) {
+        setData(result);
+        setLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
   }, [country]);
+
+  const handleSalarySearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!career.trim()) return;
+    setSalaryLoading(true);
+    setSalaryError(null);
+    try {
+      const result = await getSalaryData(career.trim(), country, language);
+      setSalaryData(result);
+    } catch {
+      setSalaryError(et('errorLoadingSalary', language));
+      setSalaryData(null);
+    } finally {
+      setSalaryLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -338,7 +171,7 @@ export default function EconomyTab({ country, language }: EconomyTabProps) {
         <p className="text-gray-400">{country} — {et('realData', language)}</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
           <div className="flex items-center gap-2 text-gray-400 mb-2">
             <TrendingUp className="w-4 h-4" />
@@ -365,17 +198,7 @@ export default function EconomyTab({ country, language }: EconomyTabProps) {
             <span className="text-sm">{et('inflation', language)}</span>
           </div>
           <div className="text-2xl font-bold text-orange-400">
-            {data.inflationRate?.toFixed(1) ?? 'N/A'}%
-          </div>
-        </div>
-
-        <div className="bg-white/5 rounded-2xl p-5 border border-white/10">
-          <div className="flex items-center gap-2 text-gray-400 mb-2">
-            <DollarSign className="w-4 h-4" />
-            <span className="text-sm">{et('gdpPerCapita', language)}</span>
-          </div>
-          <div className="text-2xl font-bold text-blue-400">
-            ${data.gdpPerCapita?.toLocaleString() ?? 'N/A'}
+            {data.youthUnemployment?.toFixed(1) ?? 'N/A'}%
           </div>
         </div>
       </div>
@@ -388,6 +211,104 @@ export default function EconomyTab({ country, language }: EconomyTabProps) {
         <p className="text-gray-400 text-sm">
           {et('careerImpactDesc', language, { country })}
         </p>
+      </div>
+
+      {/* Salary Tracker */}
+      <div className="bg-white/5 rounded-2xl p-5 border border-white/10 space-y-4">
+        <div className="flex items-center gap-2">
+          <DollarSign className="w-4 h-4 text-[#ff4e00]" />
+          <span className="font-medium">{et('salaryTracker', language)}</span>
+        </div>
+
+        <form onSubmit={handleSalarySearch} className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            value={career}
+            onChange={(e) => setCareer(e.target.value)}
+            placeholder={et('careerPlaceholder', language)}
+            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white placeholder-gray-500 outline-none focus:ring-1 focus:ring-[#ff4e00]"
+          />
+          <button
+            type="submit"
+            disabled={salaryLoading}
+            className="px-6 py-2.5 bg-[#ff4e00] hover:bg-[#ff6a2a] text-white rounded-xl font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+          >
+            <Search className="w-4 h-4" />
+            {et('searchSalary', language)}
+          </button>
+        </form>
+
+        {salaryLoading && (
+          <div className="flex items-center justify-center h-32">
+            <div className="w-6 h-6 border-2 border-[#ff4e00] border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {!salaryLoading && salaryError && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-300 text-sm">
+            {salaryError}
+          </div>
+        )}
+
+        {!salaryLoading && !salaryError && salaryData && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="bg-black/30 rounded-xl p-4">
+                <div className="text-xs text-gray-400 mb-1">{et('averageSalary', language)}</div>
+                <div className="text-xl font-bold text-green-400">
+                  {salaryData.currency} {salaryData.averageSalary.toLocaleString()}
+                </div>
+              </div>
+              <div className="bg-black/30 rounded-xl p-4">
+                <div className="text-xs text-gray-400 mb-1">{et('salaryRangeLabel', language)}</div>
+                <div className="text-sm font-medium text-white">
+                  {salaryData.currency} {salaryData.minSalary.toLocaleString()} – {salaryData.maxSalary.toLocaleString()}
+                </div>
+              </div>
+              <div className="bg-black/30 rounded-xl p-4">
+                <div className="text-xs text-gray-400 mb-1">{et('countryComparisonLabel', language)}</div>
+                <div className="text-sm text-gray-300">{salaryData.countryComparison.length} {country}</div>
+              </div>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-400 mb-2">{et('salaryTrend', language)}</div>
+              <div className="flex items-end gap-2 h-24">
+                {salaryData.trend.map((point) => {
+                  const max = Math.max(...salaryData.trend.map(p => p.salary));
+                  const heightPct = max > 0 ? (point.salary / max) * 100 : 0;
+                  return (
+                    <div key={point.year} className="flex-1 flex flex-col items-center gap-1">
+                      <div
+                        className="w-full bg-[#ff4e00]/60 rounded-t-md transition-all"
+                        style={{ height: `${heightPct}%` }}
+                        title={`${point.year}: ${salaryData.currency} ${point.salary.toLocaleString()}`}
+                      />
+                      <span className="text-[10px] text-gray-500">{point.year}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-xs text-gray-400 mb-2">{et('countryComparisonLabel', language)}</div>
+              <div className="space-y-1.5">
+                {salaryData.countryComparison.map((c) => (
+                  <div key={c.country} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-300">{c.country}</span>
+                    <span className="text-gray-400">{salaryData.currency} {c.averageSalary.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-black/30 rounded-xl p-4">
+              <div className="text-xs text-gray-400 mb-1">{et('salaryInsight', language)}</div>
+              <p className="text-sm text-gray-300">{salaryData.insight}</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
