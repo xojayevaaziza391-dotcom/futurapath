@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { UserProfile, Recommendation, CareerPrediction } from '../types';
 import { db, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, getDocs } from '../firebase';
 import { generateRecommendations, getMarketPredictions, analyzeTrends, getUniversityInfo, getCareerDetails, analyzeSkillGap } from '../services/gemini';
@@ -35,7 +35,8 @@ export default function Dashboard({ profile, language }: DashboardProps) {
   const [currentSkillsList, setCurrentSkillsList] = useState<string[]>([]);
   const [skillGapResult, setSkillGapResult] = useState<any>(null);
   const [isAnalyzingSkills, setIsAnalyzingSkills] = useState(false);
-
+  const [isAnalyzingSkills, setIsAnalyzingSkills] = useState(false);
+  const lastRegenTriggerRef = useRef<string | null>(null);
   const marketTrends = React.useMemo(() => {
     if (rawMarketTrends.length === 0) return [];
     const years = rawMarketTrends[0].data.map((d: any) => d.year);
@@ -94,15 +95,25 @@ export default function Dashboard({ profile, language }: DashboardProps) {
   }, [profile.uid]);
 
   useEffect(() => {
-    if (recommendations.length > 0 && !isGenerating) {
-      const latestRec = recommendations[0];
-      const profileUpdated = profile.updatedAt?.toDate?.() || new Date(profile.updatedAt?.seconds * 1000 || 0);
-      const recCreated = latestRec.createdAt?.toDate?.() || new Date(latestRec.createdAt?.seconds * 1000 || 0);
-      if (profileUpdated.getTime() > recCreated.getTime() + 5000 || latestRec.language !== language) {
-        handleGenerateRecs();
-      }
-    }
-  }, [profile.updatedAt, recommendations.length, isGenerating, language]);
+    if (recommendations.length === 0 || isGenerating) return;
+
+    const latestRec = recommendations[0];
+    const profileUpdatedSeconds = profile.updatedAt?.seconds ?? null;
+    const recCreatedSeconds = latestRec.createdAt?.seconds ?? null;
+
+    // Skip if either timestamp hasn't resolved yet (serverTimestamp briefly returns null right after a write)
+    if (profileUpdatedSeconds === null || recCreatedSeconds === null) return;
+
+    const needsRegen = profileUpdatedSeconds > recCreatedSeconds + 5 || latestRec.language !== language;
+    if (!needsRegen) return;
+
+    // Build a unique key for this exact trigger condition so we only regenerate once per actual change
+    const triggerKey = `${profileUpdatedSeconds}_${language}`;
+    if (lastRegenTriggerRef.current === triggerKey) return;
+
+    lastRegenTriggerRef.current = triggerKey;
+    handleGenerateRecs();
+  }, [profile.updatedAt, recommendations, isGenerating, language]);
 
   useEffect(() => {
     const fetchTrends = async () => {
