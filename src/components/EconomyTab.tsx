@@ -1,21 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { TrendingUp, TrendingDown, DollarSign, Users, BarChart3, Search } from 'lucide-react';
 import { getRealEconomicData, EconomicData } from '../services/worldbank';
-import { getSalaryData } from '../services/gemini';
+import { getSalaryData, SalaryData, SalaryApiError } from '../services/salaryApi';
 
 interface EconomyTabProps {
   country: string;
   language: string;
-}
-
-interface SalaryData {
-  averageSalary: number;
-  minSalary: number;
-  maxSalary: number;
-  currency: string;
-  trend: { year: number; salary: number }[];
-  countryComparison: { country: string; averageSalary: number }[];
-  insight: string;
 }
 
 const economyT: { [key: string]: { [lang: string]: string } } = {
@@ -82,17 +72,13 @@ const economyT: { [key: string]: { [lang: string]: string } } = {
     English: 'Salary Range', Uzbek: 'Maosh Oralig\'i', Turkish: 'Maaş Aralığı', Russian: 'Диапазон зарплат',
     Spanish: 'Rango Salarial', French: 'Fourchette Salariale', German: 'Gehaltsspanne',
   },
-  salaryTrend: {
-    English: 'Salary Trend (2020–2026)', Uzbek: 'Maosh Tendensiyasi (2020–2026)', Turkish: 'Maaş Trendi (2020–2026)', Russian: 'Тренд зарплат (2020–2026)',
-    Spanish: 'Tendencia Salarial (2020–2026)', French: 'Tendance Salariale (2020–2026)', German: 'Gehaltstrend (2020–2026)',
+  salaryHistogram: {
+    English: 'Salary Distribution', Uzbek: 'Maosh Taqsimoti', Turkish: 'Maaş Dağılımı', Russian: 'Распределение зарплат',
+    Spanish: 'Distribución Salarial', French: 'Distribution Salariale', German: 'Gehaltsverteilung',
   },
-  countryComparisonLabel: {
-    English: 'Country Comparison', Uzbek: 'Davlatlar Taqqoslash', Turkish: 'Ülke Karşılaştırması', Russian: 'Сравнение по странам',
-    Spanish: 'Comparación de Países', French: 'Comparaison par Pays', German: 'Ländervergleich',
-  },
-  salaryInsight: {
-    English: 'Insight', Uzbek: 'Tahlil', Turkish: 'İçgörü', Russian: 'Анализ',
-    Spanish: 'Perspectiva', French: 'Analyse', German: 'Einblick',
+  jobsFound: {
+    English: 'Jobs Found', Uzbek: 'Topilgan Ishlar', Turkish: 'Bulunan İşler', Russian: 'Найдено вакансий',
+    Spanish: 'Empleos Encontrados', French: 'Emplois Trouvés', German: 'Gefundene Stellen',
   },
   searchSalary: {
     English: 'Search Salary', Uzbek: 'Maoshni Qidirish', Turkish: 'Maaş Ara', Russian: 'Найти зарплату',
@@ -106,6 +92,15 @@ const economyT: { [key: string]: { [lang: string]: string } } = {
     Spanish: 'No se pudieron cargar los datos salariales. Inténtalo de nuevo.',
     French: 'Impossible de charger les données salariales. Veuillez réessayer.',
     German: 'Gehaltsdaten konnten nicht geladen werden. Bitte erneut versuchen.',
+  },
+  salaryFallbackWarning: {
+    English: 'Salary data for {country} is not directly available. Showing {fallback} data as a reference baseline instead.',
+    Uzbek: "{country} uchun maosh ma'lumotlari mavjud emas. O'rniga {fallback} ma'lumotlari ko'rsatilmoqda.",
+    Turkish: '{country} için maaş verileri doğrudan mevcut değil. Bunun yerine {fallback} verileri referans olarak gösteriliyor.',
+    Russian: 'Данные о зарплатах для {country} недоступны напрямую. Вместо этого показаны данные {fallback} как ориентир.',
+    Spanish: 'Los datos salariales de {country} no están disponibles directamente. Mostrando datos de {fallback} como referencia.',
+    French: 'Les données salariales pour {country} ne sont pas directement disponibles. Affichage des données de {fallback} à titre de référence.',
+    German: 'Gehaltsdaten für {country} sind nicht direkt verfügbar. Es werden stattdessen {fallback}-Daten als Referenz angezeigt.',
   },
 };
 
@@ -146,10 +141,10 @@ export default function EconomyTab({ country, language }: EconomyTabProps) {
     setSalaryLoading(true);
     setSalaryError(null);
     try {
-      const result = await getSalaryData(career.trim(), country, language);
+      const result = await getSalaryData(career.trim(), country);
       setSalaryData(result);
-    } catch {
-      setSalaryError(et('errorLoadingSalary', language));
+    } catch (err) {
+      setSalaryError(err instanceof SalaryApiError ? err.message : et('errorLoadingSalary', language));
       setSalaryData(null);
     } finally {
       setSalaryLoading(false);
@@ -252,6 +247,12 @@ export default function EconomyTab({ country, language }: EconomyTabProps) {
 
         {!salaryLoading && !salaryError && salaryData && (
           <div className="space-y-4">
+            {salaryData.isFallback && (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 text-yellow-300 text-xs flex items-start gap-2">
+                <span>⚠️</span>
+                <span>{et('salaryFallbackWarning', language, { country, fallback: salaryData.fallbackCountryUsed || 'United States' })}</span>
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-black/30 rounded-xl p-4">
                 <div className="text-xs text-gray-400 mb-1">{et('averageSalary', language)}</div>
@@ -266,46 +267,31 @@ export default function EconomyTab({ country, language }: EconomyTabProps) {
                 </div>
               </div>
               <div className="bg-black/30 rounded-xl p-4">
-                <div className="text-xs text-gray-400 mb-1">{et('countryComparisonLabel', language)}</div>
-                <div className="text-sm text-gray-300">{salaryData.countryComparison.length} {country}</div>
+                <div className="text-xs text-gray-400 mb-1">{et('jobsFound', language)}</div>
+                <div className="text-xl font-bold text-blue-400">{salaryData.jobCount.toLocaleString()}</div>
               </div>
             </div>
 
             <div>
-              <div className="text-xs text-gray-400 mb-2">{et('salaryTrend', language)}</div>
-              <div className="flex items-end gap-2 h-24">
-                {salaryData.trend.map((point) => {
-                  const max = Math.max(...salaryData.trend.map(p => p.salary));
-                  const heightPct = max > 0 ? (point.salary / max) * 100 : 0;
+              <div className="text-xs text-gray-400 mb-2">{et('salaryHistogram', language)}</div>
+              <div className="flex items-end gap-1.5 h-24">
+                {salaryData.histogram.map((bucket) => {
+                  const max = Math.max(...salaryData.histogram.map(h => h.count));
+                  const heightPct = max > 0 ? (bucket.count / max) * 100 : 0;
                   return (
-                    <div key={point.year} className="flex-1 flex flex-col items-center gap-1">
+                    <div key={bucket.range} className="flex-1 flex flex-col items-center gap-1">
                       <div
-                        className="w-full bg-[#ff4e00]/60 rounded-t-md transition-all"
+                        className="w-full bg-[#ff4e00]/60 rounded-t-md transition-all min-h-[2px]"
                         style={{ height: `${heightPct}%` }}
-                        title={`${point.year}: ${salaryData.currency} ${point.salary.toLocaleString()}`}
+                        title={`${salaryData.currency} ${parseInt(bucket.range).toLocaleString()}: ${bucket.count} jobs`}
                       />
-                      <span className="text-[10px] text-gray-500">{point.year}</span>
+                      <span className="text-[9px] text-gray-500 rotate-0">
+                        {(parseInt(bucket.range) / 1000).toFixed(0)}k
+                      </span>
                     </div>
                   );
                 })}
               </div>
-            </div>
-
-            <div>
-              <div className="text-xs text-gray-400 mb-2">{et('countryComparisonLabel', language)}</div>
-              <div className="space-y-1.5">
-                {salaryData.countryComparison.map((c) => (
-                  <div key={c.country} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-300">{c.country}</span>
-                    <span className="text-gray-400">{salaryData.currency} {c.averageSalary.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-black/30 rounded-xl p-4">
-              <div className="text-xs text-gray-400 mb-1">{et('salaryInsight', language)}</div>
-              <p className="text-sm text-gray-300">{salaryData.insight}</p>
             </div>
           </div>
         )}
