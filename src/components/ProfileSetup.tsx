@@ -25,7 +25,7 @@ export default function ProfileSetup({ onComplete, initialData, language, onLang
   const totalSteps = 8;
 
   const countries = [
-    'Global', 'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Australia', 'Australia', 'Austria', 'Azerbaijan',
+    'Global', 'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Australia', 'Austria', 'Azerbaijan',
     'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan', 'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Burkina Faso', 'Burundi',
     'Cabo Verde', 'Cambodia', 'Cameroon', 'Canada', 'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia', 'Comoros', 'Congo', 'Costa Rica', 'Croatia', 'Cuba', 'Cyprus', 'Czech Republic',
     'Denmark', 'Djibouti', 'Dominica', 'Dominican Republic',
@@ -108,20 +108,27 @@ export default function ProfileSetup({ onComplete, initialData, language, onLang
                 <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-[#ff4e00]" />
                 <h3>{t('selectLanguageTitle', language)}</h3>
               </div>
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 gap-4 sm:gap-5">
                 {SUPPORTED_LANGUAGES.map((l) => (
                   <button
                     key={l.code}
                     onClick={() => onLanguageChange(l.code)}
-                    className={`p-4 rounded-xl border text-left transition-all flex items-start gap-3 ${
+                    className={`p-4 sm:p-5 rounded-xl border text-left transition-all flex items-center gap-3 ${
                       language === l.code 
                         ? 'bg-[#ff4e00]/10 border-[#ff4e00] ring-1 ring-[#ff4e00]' 
                         : 'bg-white/5 border-white/10 hover:bg-white/10'
                     }`}
                   >
-                    <img src={getFlagUrl(l.flagCode)} alt={l.name} className="w-8 h-5.5 object-cover rounded shadow-sm mt-1" />
-                    <div>
-                      <div className="font-bold">{l.name}</div>
+                    <img
+                      src={getFlagUrl(l.flagCode)}
+                      alt={l.name}
+                      width={32}
+                      height={24}
+                      loading="lazy"
+                      className="w-8 h-6 object-cover rounded shadow-sm flex-shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <div className="font-bold truncate">{l.name}</div>
                       <div className="text-xs text-gray-400">{l.label}</div>
                     </div>
                   </button>
@@ -196,18 +203,25 @@ export default function ProfileSetup({ onComplete, initialData, language, onLang
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-[#ff4e00] mb-4"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 max-h-[300px] sm:max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 max-h-[300px] sm:max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {filteredCountries.map((c) => (
                   <button
                     key={c}
                     onClick={() => setCountry(c)}
-                    className={`p-3 sm:p-4 rounded-xl border text-xs sm:text-sm transition-all text-left flex items-center gap-2 ${
+                    className={`p-3 sm:p-4 rounded-xl border text-xs sm:text-sm transition-all text-left flex items-center gap-2.5 ${
                       country === c 
                         ? 'bg-[#ff4e00]/10 border-[#ff4e00] text-[#ff4e00] font-bold' 
                         : 'bg-white/5 border-white/10 hover:bg-white/10 text-gray-400'
                     }`}
                   >
-                    <img src={getCountryFlag(c)} alt={c} className="w-6 h-4 object-cover rounded-sm shadow-sm" />
+                    <img
+                      src={getCountryFlag(c)}
+                      alt={c}
+                      width={24}
+                      height={16}
+                      loading="lazy"
+                      className="w-6 h-4 object-cover rounded-sm shadow-sm flex-shrink-0"
+                    />
                     <span className="truncate">{c}</span>
                   </button>
                 ))}

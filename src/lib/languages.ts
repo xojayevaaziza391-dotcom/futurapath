@@ -18,9 +18,11 @@ export const SUPPORTED_LANGUAGES: Language[] = [
 export const getLanguageByCode = (code: string) => 
   SUPPORTED_LANGUAGES.find(l => l.code === code) || SUPPORTED_LANGUAGES[0];
 
+// Use w320 (high-res) source and let CSS scale down for crisp rendering on retina/high-DPI screens.
+// Previously used w80 which looked blurry once upscaled or viewed on high-density displays.
 export const getFlagUrl = (isoCode: string) => {
-  if (isoCode === 'global') return 'https://flagcdn.com/256x192/un.png'; // Using UN flag for global
-  return `https://flagcdn.com/w80/${isoCode.toLowerCase()}.png`;
+  if (isoCode === 'global') return 'https://flagcdn.com/w320/un.png'; // Using UN flag for global
+  return `https://flagcdn.com/w320/${isoCode.toLowerCase()}.png`;
 };
 
 export const getCountryISO = (countryName: string): string => {
