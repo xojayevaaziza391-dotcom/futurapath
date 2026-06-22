@@ -135,9 +135,9 @@ export default function App() {
             <div className="hidden sm:flex items-center gap-2">
               <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-4 h-4" />} label={t('dashboard', language)} />
               <NavButton active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare className="w-4 h-4" />} label={t('advisor', language)} />
-              <NavButton active={activeTab === 'economy'} onClick={() => setActiveTab('economy')} icon={<TrendingUp className="w-4 h-4" />} label="Economy" />
-              <NavButton active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} icon={<Briefcase className="w-4 h-4" />} label="Jobs" />
-              <NavButton active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={<Newspaper className="w-4 h-4" />} label="News" />
+              <NavButton active={activeTab === 'economy'} onClick={() => setActiveTab('economy')} icon={<TrendingUp className="w-4 h-4" />} label={t('economy', language)} />
+              <NavButton active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} icon={<Briefcase className="w-4 h-4" />} label={t('jobs', language)} />
+              <NavButton active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={<Newspaper className="w-4 h-4" />} label={t('news', language)} />
               <NavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<UserIcon className="w-4 h-4" />} label={t('account', language)} />
             </div>
             <button onClick={logout} className="p-2 text-gray-400 hover:text-white transition-colors" title="Logout">
@@ -186,9 +186,9 @@ export default function App() {
         <div className="flex items-center justify-between max-w-md mx-auto">
           <MobileNavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-6 h-6" />} label={t('home', language)} />
           <MobileNavButton active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare className="w-6 h-6" />} label={t('advisor', language)} />
-          <MobileNavButton active={activeTab === 'economy'} onClick={() => setActiveTab('economy')} icon={<TrendingUp className="w-6 h-6" />} label="Economy" />
-          <MobileNavButton active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} icon={<Briefcase className="w-6 h-6" />} label="Jobs" />
-          <MobileNavButton active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={<Newspaper className="w-6 h-6" />} label="News" />
+          <MobileNavButton active={activeTab === 'economy'} onClick={() => setActiveTab('economy')} icon={<TrendingUp className="w-6 h-6" />} label={t('economy',language)} />
+          <MobileNavButton active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} icon={<Briefcase className="w-6 h-6" />} label={t('jobs',language)} />
+          <MobileNavButton active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={<Newspaper className="w-6 h-6" />} label={t('news', language)} />
           <MobileNavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<UserIcon className="w-6 h-6" />} label={t('account', language)} />
         </div>
       </div>
