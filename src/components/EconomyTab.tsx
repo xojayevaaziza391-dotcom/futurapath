@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, Users, BarChart3, Search } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Users, BarChart3, Search, Database } from 'lucide-react';
 import { getRealEconomicData, EconomicData } from '../services/worldbank';
 import { getSalaryData, SalaryData, SalaryApiError } from '../services/salaryApi';
 
@@ -165,6 +165,16 @@ const economyT: { [key: string]: { [lang: string]: string } } = {
     Persian: 'جستجوی حقوق', Indonesian: 'Cari Gaji', Dutch: 'Zoek Salaris',
     Swedish: 'Sök Lön',
   },
+  dataSources: {
+    English: 'Data from', Uzbek: 'Maʼlumot manbai', Turkish: 'Veri kaynağı',
+    Russian: 'Данные из', Spanish: 'Datos de', French: 'Données de',
+    German: 'Daten von', Arabic: 'بيانات من', Chinese: '数据来源',
+    Japanese: 'データ元', Korean: '데이터 출처', Hindi: 'डेटा स्रोत',
+    Portuguese: 'Dados de', Italian: 'Dati da', Polish: 'Dane z',
+    Ukrainian: 'Дані з', Kazakh: 'Деректер', Azerbaijani: 'Məlumat mənbəyi',
+    Persian: 'داده از', Indonesian: 'Data dari', Dutch: 'Gegevens van',
+    Swedish: 'Data från',
+  },
   errorLoadingSalary: {
     English: 'Could not load salary data. Please try again.',
     Uzbek: "Maosh ma'lumotlarini yuklab bo'lmadi. Qaytadan urinib ko'ring.",
@@ -311,10 +321,23 @@ export default function EconomyTab({ country, language }: EconomyTabProps) {
       </div>
 
       <div className="bg-white/5 rounded-2xl p-5 border border-white/10 space-y-4">
-        <div className="flex items-center gap-2">
-          <DollarSign className="w-4 h-4 text-[#ff4e00]" />
-          <span className="font-medium">{et('salaryTracker', language)}</span>
+        {/* Header with sources badge */}
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-[#ff4e00]" />
+            <span className="font-medium">{et('salaryTracker', language)}</span>
+          </div>
+          {/* Sources badge — shown only after a search */}
+          {salaryData && salaryData.sources && salaryData.sources.length > 0 && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#ff4e00]/10 border border-[#ff4e00]/20 rounded-full">
+              <Database className="w-3 h-3 text-[#ff4e00]" />
+              <span className="text-[10px] font-bold text-[#ff4e00] uppercase tracking-wide">
+                {et('dataSources', language)}: {salaryData.sources.join(' + ')}
+              </span>
+            </div>
+          )}
         </div>
+
         <form onSubmit={handleSalarySearch} className="flex flex-col sm:flex-row gap-3">
           <input type="text" value={career} onChange={(e) => setCareer(e.target.value)}
             placeholder={et('careerPlaceholder', language)}
