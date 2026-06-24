@@ -29,7 +29,9 @@ export default function App() {
         const docRef = doc(db, 'users', u.uid);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setProfile(docSnap.data() as UserProfile);
+          const profileData = docSnap.data() as UserProfile;
+          setProfile(profileData);
+          if (profileData.language) setLanguage(profileData.language);
         } else {
           setProfile(null);
         }
@@ -46,6 +48,7 @@ export default function App() {
     const updatedProfile = {
       ...(profile || {}),
       ...newProfile,
+      language,
       uid: user.uid,
       email: user.email!,
       updatedAt: serverTimestamp(),
@@ -54,6 +57,13 @@ export default function App() {
     await setDoc(doc(db, 'users', user.uid), updatedProfile);
     setProfile(updatedProfile);
     if (!profile) setActiveTab('dashboard');
+  };
+
+  const handleLanguageChange = (lang: string) => {
+    setLanguage(lang);
+    if (user && profile) {
+      handleProfileUpdate({ language: lang });
+    }
   };
 
   if (loading) {
@@ -127,7 +137,7 @@ export default function App() {
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <div className="flex items-center gap-1 sm:gap-2">
-              <LanguageSelector currentLanguage={language} onLanguageChange={setLanguage} />
+              <LanguageSelector currentLanguage={language} onLanguageChange={handleLanguageChange} />
               <select value={profile.country || 'Global'} onChange={(e) => handleProfileUpdate({ country: e.target.value })} className="bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] sm:text-xs text-gray-300 outline-none focus:ring-1 focus:ring-[#ff4e00] max-w-[80px] sm:max-w-none">
                 {countries.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -176,7 +186,7 @@ export default function App() {
           )}
           {activeTab === 'profile' && (
             <motion.div key="profile" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
-              <Account profile={profile} onUpdate={handleProfileUpdate} language={language} onLanguageChange={setLanguage} />
+              <Account profile={profile} onUpdate={handleProfileUpdate} language={language} onLanguageChange={handleLanguageChange} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -186,8 +196,8 @@ export default function App() {
         <div className="flex items-center justify-between max-w-md mx-auto">
           <MobileNavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard className="w-6 h-6" />} label={t('home', language)} />
           <MobileNavButton active={activeTab === 'chat'} onClick={() => setActiveTab('chat')} icon={<MessageSquare className="w-6 h-6" />} label={t('advisor', language)} />
-          <MobileNavButton active={activeTab === 'economy'} onClick={() => setActiveTab('economy')} icon={<TrendingUp className="w-6 h-6" />} label={t('economy',language)} />
-          <MobileNavButton active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} icon={<Briefcase className="w-6 h-6" />} label={t('jobs',language)} />
+          <MobileNavButton active={activeTab === 'economy'} onClick={() => setActiveTab('economy')} icon={<TrendingUp className="w-6 h-6" />} label={t('economy', language)} />
+          <MobileNavButton active={activeTab === 'jobs'} onClick={() => setActiveTab('jobs')} icon={<Briefcase className="w-6 h-6" />} label={t('jobs', language)} />
           <MobileNavButton active={activeTab === 'news'} onClick={() => setActiveTab('news')} icon={<Newspaper className="w-6 h-6" />} label={t('news', language)} />
           <MobileNavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<UserIcon className="w-6 h-6" />} label={t('account', language)} />
         </div>
